@@ -1,5 +1,0 @@
-#pragma once
-class Lidar
-{
-};
-

@@ -7,19 +7,19 @@
 #include <array>
 #include <vector>
 #include <sstream>
+#include <nlohmann/json.hpp>
+#include <fstream>
+#include <algorithm>
+#include <cmath>
+#include "camToLidar.h"
+#include "obstacles.h"
+#include "global.h"
+float angle_global = 0.0;
 
-std::string exec(const char* cmd) {
-    std::array<char, 128> buffer;
-    std::string result;
-    std::unique_ptr<FILE, decltype(&_pclose)> pipe(_popen(cmd, "r"), _pclose);
-    if (!pipe) {
-        throw std::runtime_error("popen failed");
-    }
-    while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
-        result += buffer.data();
-    }
-    return result;
-}
+int stopping_length = 0;
+//detected objects relevant for checking distances
+
+
 int listen() {
     std::string output;
     try {
@@ -80,8 +80,57 @@ int listen() {
         return 0;
     }
 //while going
+    int going(std::string imagePath) {
+        std::string command = "python \"C:\\Users\\User\\Documents\\projectC\\ML.py\" \"" + imagePath + "\"";
 
+       
+           
+
+    }
    
+
+    //road, downstairs, sidewalk, upstairs, pedestrian traffic light, red, green, crosswalk
+    int controller(object obj) {
+        initT();
+		initK();
+
+				std::string instructoins;
+                switch (obj.class_id) {
+                case(1):
+					instructoins = "downstairs are ahead";
+					break;
+				case(3):
+					instructoins = "upstairs are ahead";
+					break;
+				case(4):
+					//again ML not found the color of the traffic light
+					instructoins = "stop, traffic light";
+					break;
+				case(5):
+					instructoins = "stop, red light";
+					break;
+				case(6):
+					instructoins = "green light";
+					//to implement crosswalk function- calling to obstacles with the right parameters
+                    crosswalk();
+					break;
+				case(7):
+					instructoins = "crosswalk is ahead";
+                    crosswalk();
+					break;
+                }
+				std::string command = "python \"C:\\Users\\User\\Documents\\projectC\\tts.py\"" + instructoins;
+				int result = system(command.c_str());
+		
+			if(class_id==2){
+				const float* box = getBottomThird(bbox);
+				float min = minDistance(box);
+				float max = maxDistance(box);
+				findPassage(min, max, 2.0);
+			}
+		}
+		
+   }
 
 
 int main() 

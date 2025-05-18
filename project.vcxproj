@@ -81,6 +81,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>-I"C:\Users\User\vcpkg\installed\x64-windows\include";%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -110,6 +111,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>-I"C:\Users\User\vcpkg\installed\x64-windows\include";%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -130,24 +132,31 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="camToLidar.cpp" />
-    <ClCompile Include="getTrail.cpp" />
-    <ClCompile Include="GPS.cpp" />
+    <ClCompile Include="controller.cpp" />
+    <ClCompile Include="graph.cpp" />
+    <ClCompile Include="ICP.cpp" />
+    <ClCompile Include="sensors.cpp" />
     <ClCompile Include="kalmanFilter.cpp" />
-    <ClCompile Include="Lidar.cpp" />
+    <ClCompile Include="global.cpp" />
     <ClCompile Include="obstacles.cpp" />
-    <ClCompile Include="Pedometer.cpp" />
     <ClCompile Include="project.cpp" />
+    <ClCompile Include="NevigationObject.cpp" />
+    <ClCompile Include="speach.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="camToLidar.h" />
-    <ClInclude Include="getTrail.h" />
-    <ClInclude Include="GPS.h" />
+    <ClInclude Include="controller.h" />
+    <ClInclude Include="graph.h" />
+    <ClInclude Include="ICP.h" />
+    <ClInclude Include="sensors.h" />
     <ClInclude Include="kalmanFilter.h" />
-    <ClInclude Include="Lidar.h" />
+    <ClInclude Include="global.h" />
     <ClInclude Include="obstacles.h" />
-    <ClInclude Include="Pedometer.h" />
+    <ClInclude Include="NevigationObject.h" />
+    <ClInclude Include="speach.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="ClassDiagram2.cd" />
     <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

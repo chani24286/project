@@ -1,34 +1,26 @@
 #pragma once
-#pragma once
 #include <Eigen/Dense>
-#include <iostream>
+#include "NevigationObject.h"
 
 class KalmanFilter {
 public:
     KalmanFilter(double q_scale);
-
     void init(double t0, const Eigen::VectorXd& x0);
-    void predict(double t);
-
-    void updateLidar(const Eigen::VectorXd& z);
-    void updateGPS(const Eigen::VectorXd& z);
-    void updatePedometer(const Eigen::VectorXd& z);
-
+    void predict(double t, NevigationObject &me);
+    void updatePedometer(const Eigen::VectorXd& z, NevigationObject& me);
+    void updateGPS(const Eigen::VectorXd& z, NevigationObject &me);
+    void updateLiDAR(const Eigen::VectorXd& z, NevigationObject &me);
+    void sensors(const Eigen::VectorXd& H, const Eigen::VectorXd& R, const Eigen::VectorXd& z, NevigationObject& me);
     Eigen::VectorXd state() const;
+    void updateMe(const Eigen::VectorXd& x, NevigationObject &me);
 
 private:
-    double q; // scale of process noise
+    int n;
+    //q- noise , as much as i think that my model works well
+    double q;
     double last_t;
     bool initialized;
 
-    int n; // state size
-    int m; // measurement size (not fixed)
-
-    Eigen::VectorXd x; // state
-    Eigen::MatrixXd P; // state covariance
-
-    Eigen::MatrixXd A; // system dynamics
-    Eigen::MatrixXd Q; // process noise
-
-    Eigen::MatrixXd I; // identity
+    Eigen::VectorXd x;
+    Eigen::MatrixXd P, A, Q, I;
 };

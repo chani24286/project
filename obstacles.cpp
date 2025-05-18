@@ -11,42 +11,36 @@
 #include <algorithm>
 #include <iostream>
 #include <cstdlib>
+#include "NevigationObject.h"
+#include <pcl/common/transforms.h>
+#include <pcl/point_cloud.h>
+#include <pcl/point_types.h>
 //#include <pcl/visualization/pcl_visualizer.h>
 
 
-struct ClusterInfo {
-    float y_min;   // הקצה הכי שמאלי באשכול (לפי Y)
-    float y_max;   // הקצה הכי ימני באשכול (לפי Y)
-    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud;  // האשכול עצמו
-};
-
-float findPassage(float y_min_limit, float y_max_limit, float dist)
-{
-    // טוען את ענן הנקודות
-    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ>());
-    if (pcl::io::loadPCDFile<pcl::PointXYZ>("input.pcd", *cloud) == -1)
-    {
-        PCL_ERROR("Couldn't read file input.pcd \n");
-        return (-1);
-    }
-    std::cout << "Number of points in cloud: " << cloud->points.size() << std::endl;
-
-
-    // שלב 1: סינון לפי גובה Z ורחוקות X
+pcl::PointCloud<pcl::PointXYZ>::Ptr filter(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, float dist) {
     pcl::PassThrough<pcl::PointXYZ> pass;
     pass.setInputCloud(cloud);
 
     // סינון נקודות נמוכות מדי או גבוהות מדי
-    pass.setFilterFieldName("y");
+    pass.setFilterFieldName("z");
     pass.setFilterLimits(0.05, 2.0); // 5 ס"מ עד 2 מטר גובה
     pass.filter(*cloud);
-    
+
 
     // סינון נקודות רחוקות מדי
     pass.setFilterFieldName("x");
-    pass.setFilterLimits(0.0, dist); 
+    pass.setFilterLimits(0.0, dist);
     pass.filter(*cloud);
-    std::cout << "Number of points after filtering: " << cloud->points.size() << std::endl;
+    return cloud;
+}
+
+float findPassage(float y_min_limit, float y_max_limit, float dist, pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, NevigationObject &me)
+{
+ 
+
+    // שלב 1: סינון לפי גובה Z ורחוקות X
+    cloud = filter(cloud, dist);
     // שלב 2: יצירת KDTree לאשכולות
     pcl::search::KdTree<pcl::PointXYZ>::Ptr tree(new pcl::search::KdTree<pcl::PointXYZ>());
     tree->setInputCloud(cloud);
@@ -112,73 +106,71 @@ float findPassage(float y_min_limit, float y_max_limit, float dist)
 
     // שלב 6: חיפוש מעבר פנוי
     bool found_passage = false;
-    float window_size = 0.06; // רוחב של 60 ס"מ לדוגמה
-    for (const auto& cluster : left_clusters)
-        std::cout << "Left cluster: y_min=" << cluster.y_min << ", y_max=" << cluster.y_max << std::endl;
-
-    for (const auto& cluster : right_clusters)
-        std::cout << "Right cluster: y_min=" << cluster.y_min << ", y_max=" << cluster.y_max << std::endl;
+    float window_size = 0.06; 
 
     float gap_middle = right_clusters[0].y_min - left_clusters.back().y_max;
     if (gap_middle >= window_size) {
-        std::cout << "Found passage between left and right clusters continue straight: " << gap_middle << std::endl;
+        //me.setInstruction("Found passage between left and right clusters continue straight: " +std::to_string(gap_middle));
         return 0.0;
     }
     // נבדוק בין אשכולות בצד שמאל
-    for (size_t i = 0; i + 1 < left_clusters.size(); ++i)
+    for (size_t i = 0; i + 1 < left_clusters.size()&&!found_passage; ++i)
     {
         float gap = left_clusters[i].y_min - left_clusters[i + 1].y_max;
         if (gap >= window_size)
         {
-            std::cout << "Found passage in left: " <<left_clusters[i].y_min << " meters\n";
+            float last = (i - 1 < 0) ? 0 : left_clusters[i].y_min - left_clusters[i - 1].y_max;
+            
+            //me.setInstruction( "Found passage in left: " + std::to_string(last) + " meters\n");
             found_passage = true;
-			return left_clusters[i].y_min;
+            return last;
         }
     }
 
     // נבדוק בין אשכולות בצד ימין
-    if (!found_passage)
-    {
-        for (size_t i = 0; i + 1 < right_clusters.size(); ++i)
+        for (size_t i = 0; i + 1 < right_clusters.size()&&!found_passage; ++i)
         {
             float gap = right_clusters[i + 1].y_min - right_clusters[i].y_max;
             if (gap >= window_size)
             {
-                std::cout << "Found passage in right: " << right_clusters[i].y_max << " meters from you\n";
+                float last=0;
+                if (i - 1 >= 0)
+                    last = right_clusters[i].y_max - right_clusters[i-1].y_max;
+                //me.setInstruction( "Found passage in right: " +std::to_string( last) + " meters from you");
                 found_passage = true;
-				return right_clusters[i].y_max;
+                return last;
             }
         }
-    }
 
     if (!found_passage)
-        std::cout << "No passage found\n";
+        me.setInstruction( "No passage found\n");
 
     return -1.1;
 }
-int instructionsObs(float x, float y, float distance) {
-	float space= findPassage(x,y, distance);
+int instructionsObs(float x, float y, float distance, NevigationObject &me) {//cloud points is missed
+	float space= findPassage(x,y, distance, me);
     std::string direction;
 	if (space == -1.1) {
-		std::cout << "No passage found\n";
+		me.setInstruction( "No passage found\n");
+        //check if the node moves or throw down the edge and find another trail.
 		return -1;
 	}
     if (space == 0) {
-		direction = "continue straight";
+	me.setInstruction( "continue straight");
     }
 	else if (space > 0) {
-        direction = " left";
+        me.setInstruction( " left");
 	}
 	else {
 		
-        direction = " right";
+       me.setInstruction(" right");
 	}
-    std::string command = "python \"C:\\Users\\User\\Documents\\projectC\\tts.py\"" + direction;
-
-    int result = system(command.c_str());
-
-    if (result != 0) {
-        std::cerr << "Error running Python script!" << std::endl;
-    }
 
 }
+pcl::PointCloud<pcl::PointXYZ>::Ptr transform(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, Matrix4d T) {
+    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_transformed(new pcl::PointCloud<pcl::PointXYZ>);
+    pcl::transformPointCloud(*cloud, *cloud_transformed, T);
+    return cloud_transformed;
+}
+
+

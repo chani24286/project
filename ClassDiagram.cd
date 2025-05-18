@@ -1,0 +1,67 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1">
+  <Class Name="Sensor" Collapsed="true">
+    <Position X="2.75" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAQAAAAAAQAAAAAAAABAQAAAAAAARAAAAAAA=</HashCode>
+      <FileName>sensors.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="LidarSensor" Collapsed="true">
+    <Position X="2.75" Y="1.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AACQAAAIAAAAQAAAAAAAAAAAAAAAAAAQAAAAAAAAAAA=</HashCode>
+      <FileName>sensors.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="GPSsensor" Collapsed="true">
+    <Position X="5" Y="1.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAIAAgAAIIQIAAAAACCAAAAACAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>sensors.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="pedometer" Collapsed="true">
+    <Position X="0.5" Y="1.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>EAQgAQAgAQAAQAAAAACAAAAAAAAAEAACAAAAAAAAAAA=</HashCode>
+      <FileName>sensors.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="KalmanFilter" Collapsed="true">
+    <Position X="9.25" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AgAAAAAAAFAQAAAAAAABAAAAAAAAAAJEECBgKCBgAAA=</HashCode>
+      <FileName>kalmanFilter.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="NevigationObject" Collapsed="true">
+    <Position X="11" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAFBIAAIAJIAgAUABkAANAACARAAAYAQAGAEFAAAAIA=</HashCode>
+      <FileName>NevigationObject.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Struct Name="Point3D" Collapsed="true">
+    <Position X="9.25" Y="3.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABgAQAAAAA=</HashCode>
+      <FileName>camToLidar.h</FileName>
+    </TypeIdentifier>
+  </Struct>
+  <Struct Name="object" Collapsed="true">
+    <Position X="7.5" Y="3.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AEAAAAAAACAAAAAABAAAAAAAAAAAAAAAAAAAAABAAAA=</HashCode>
+      <FileName>controller.h</FileName>
+    </TypeIdentifier>
+  </Struct>
+  <Struct Name="ClusterInfo" Collapsed="true">
+    <Position X="7.5" Y="3" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAABAAAAAAAACAAAACAAAAAAAAAAA=</HashCode>
+      <FileName>obstacles.h</FileName>
+    </TypeIdentifier>
+  </Struct>
+  <Font Name="Segoe UI" Size="9" />
+</ClassDiagram>

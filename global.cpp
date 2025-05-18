@@ -2,7 +2,7 @@
 #include <pcl/point_types.h>
 #include <pcl/common/transforms.h>
 #include <Eigen/Dense>
-
+#define M_PI 3.14159265358979323846
 void translatePointCloud(
     const std::string& input_file,
     const std::string& output_file,
@@ -26,4 +26,28 @@ void translatePointCloud(
 
     // שמירה לקובץ
     pcl::io::savePCDFileBinary(output_file, *transformed_cloud);
+}
+double deg2rad(double degrees) {
+    return degrees * M_PI / 180.0;
+}
+double haversine(double lat1, double lon1, double lat2, double lon2) {
+    double dlat = deg2rad(lat2 - lat1);
+    double dlon = deg2rad(lon2 - lon1);
+    double a = sin(dlat / 2) * sin(dlat / 2) +
+        cos(deg2rad(lat1)) * cos(deg2rad(lat2)) *
+        sin(dlon / 2) * sin(dlon / 2);
+    double c = 2 * atan2(sqrt(a), sqrt(1 - a));
+    return R * c;
+}
+std::string exec(const char* cmd) {
+    std::array<char, 128> buffer;
+    std::string result;
+    std::unique_ptr<FILE, decltype(&_pclose)> pipe(_popen(cmd, "r"), _pclose);
+    if (!pipe) {
+        throw std::runtime_error("popen failed");
+    }
+    while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
+        result += buffer.data();
+    }
+    return result;
 }

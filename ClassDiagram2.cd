@@ -1,0 +1,112 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1">
+  <Class Name="Sensor" Collapsed="true">
+    <Position X="5.5" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAQAAAAAAQAAAAAAAABAQAAAAAAARAAAAAAA=</HashCode>
+      <FileName>sensors.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="LidarSensor" Collapsed="true">
+    <Position X="3.25" Y="1.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AACQAAAIAAAAAAAAAAAAAAAAAABAAAAQAAAAAAAAAAA=</HashCode>
+      <FileName>sensors.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="GPSsensor" Collapsed="true">
+    <Position X="5.5" Y="1.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAIAAgAAIIAIAAAAACCAAAAACAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>sensors.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="pedometer" Collapsed="true">
+    <Position X="7.75" Y="1.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>EAQgAQAgAQAAAAAAAACAAAAAAAAAEAACAAAAAAAAAAA=</HashCode>
+      <FileName>sensors.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="KalmanFilter" Collapsed="true">
+    <Position X="10.25" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AgAAAAAAAFAQAAAAAAABAAAAAAAAAAJEECBgKCBgAAA=</HashCode>
+      <FileName>kalmanFilter.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="NevigationObject" Collapsed="true">
+    <Position X="12" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAFBIAAIAJIAgAUABkAANAACARAAAYAQAGAEFAAAAIA=</HashCode>
+      <FileName>NevigationObject.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Struct Name="Point3D" Collapsed="true">
+    <Position X="10.25" Y="3.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABgAQAAAAA=</HashCode>
+      <FileName>camToLidar.h</FileName>
+    </TypeIdentifier>
+  </Struct>
+  <Struct Name="object" Collapsed="true">
+    <Position X="13.75" Y="2.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AEAAAAAAACAAAAAABAAAAAAAAAAAAAAAAAAAAABAAAA=</HashCode>
+      <FileName>controller.h</FileName>
+    </TypeIdentifier>
+  </Struct>
+  <Struct Name="Node" Collapsed="true">
+    <Position X="12" Y="2.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAIAAAAAAAAAAAAAAACAAAAAAAAAAAAAAAAAAAAgA=</HashCode>
+      <FileName>graph.h</FileName>
+    </TypeIdentifier>
+  </Struct>
+  <Struct Name="Edge" Collapsed="true">
+    <Position X="12" Y="1.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAgAAEAEAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>graph.h</FileName>
+    </TypeIdentifier>
+  </Struct>
+  <Struct Name="ClusterInfo" Collapsed="true">
+    <Position X="10.25" Y="1.75" Width="1.5" />
+    <Compartments>
+      <Compartment Name="Fields" Collapsed="true" />
+    </Compartments>
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAABAAAAAAAACAAAACAAAAAAAAAAA=</HashCode>
+      <FileName>obstacles.h</FileName>
+    </TypeIdentifier>
+  </Struct>
+  <Struct Name="ICP_OUT" Collapsed="true">
+    <Position X="13.75" Y="1.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>ACAAAAAAAAAAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>ICP.h</FileName>
+    </TypeIdentifier>
+  </Struct>
+  <Struct Name="__unnamed_struct_0cbf_1" Collapsed="true">
+    <Position X="4" Y="4.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAQAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>ICP.h</FileName>
+    </TypeIdentifier>
+  </Struct>
+  <Struct Name="KDNode" Collapsed="true">
+    <Position X="10.25" Y="2.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAgAAAAAAAAAAAAAAIAAAAAAAAAAAAgAA=</HashCode>
+      <FileName>ICP.h</FileName>
+    </TypeIdentifier>
+  </Struct>
+  <Typedef Name="NEIGHBOR" Collapsed="true">
+    <Position X="4" Y="6.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>ICP.h</FileName>
+    </TypeIdentifier>
+  </Typedef>
+  <Font Name="Segoe UI" Size="9" />
+</ClassDiagram>

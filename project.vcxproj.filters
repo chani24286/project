@@ -18,19 +18,16 @@
     <ClCompile Include="project.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="GPS.cpp">
+    <ClCompile Include="sensors.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Lidar.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Pedometer.cpp">
+    <ClCompile Include="global.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="kalmanFilter.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="getTrail.cpp">
+    <ClCompile Include="graph.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="obstacles.cpp">
@@ -39,18 +36,27 @@
     <ClCompile Include="camToLidar.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="controller.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NevigationObject.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ICP.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="speach.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="GPS.h">
+    <ClInclude Include="sensors.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Lidar.h">
+    <ClInclude Include="global.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Pedometer.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="getTrail.h">
+    <ClInclude Include="graph.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="kalmanFilter.h">
@@ -62,8 +68,21 @@
     <ClInclude Include="camToLidar.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="controller.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NevigationObject.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ICP.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="speach.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+    <None Include="ClassDiagram2.cd" />
   </ItemGroup>
 </Project>
