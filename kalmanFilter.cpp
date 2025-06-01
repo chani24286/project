@@ -5,6 +5,8 @@
 #include <iostream>
 #include "NevigationObject.h"
 #include "sensors.h"
+#include <optional> 
+#include "graph.h"
 
 using namespace std::chrono;
 
@@ -16,17 +18,23 @@ KalmanFilter::KalmanFilter(double q_scale)
     Q = Eigen::MatrixXd::Zero(n, n);
     I = Eigen::MatrixXd::Identity(n, n);
 }
-KalmanFilter::void updateMe(const Eigen::VectorXd& x, NevigationObject& me) {
+void KalmanFilter:: updateMe(const Eigen::VectorXd& x, NevigationObject& me, std::optional<GPSsensor> sen=std::nullopt) {
     // Update the state with the current position
 
-    if (x(0) <= 0) {
-        Edge edge = me.goToNextEdge();
-        me.setCurrentEdge(edge);
-    }
-    if (x(0) <= 10) {
-        me.calculateAngle();
-    }
+    if (x(0) <= 0) 
+      me.goToNextEdge();
 
+    if (x(0) <= 10 && sen.has_value()) {
+        std::vector < Edge > trail= me.getTrail();
+        if (trail.size() < 2) {
+            me.setNextTurnAngle(0.0);
+            return;
+        }
+        Node next = nodes[trail[1].to];
+        double ang= calculate_angle(sen.value().getLat(), sen.value().getLon(),me.getNextNode().lat, me.getNextNode().lon, next.lat, next.lon);
+        me.setNextTurnAngle(ang);
+    }
+    printing("kalman update position and valocity: " +std::to_string( x(0))+" "+ std::to_string(x(1)));
 	me.setPosition(x(0));
 
 }
@@ -58,43 +66,47 @@ void KalmanFilter::predict(double t, NevigationObject &me) {
     x = A * x;
     P = A * P * A.transpose() + Q;
 	updateMe(x, me);
+}
 
 void KalmanFilter::updatePedometer(const Eigen::VectorXd& z, NevigationObject& me) {
     Eigen::MatrixXd H(1, 2);
     H << 0, 1; // מודד רק את המהירות
 
     Eigen::MatrixXd R = Eigen::MatrixXd::Identity(1, 1); // רעש מדידה
-    sensors(H, R, z, me);
+    Eigen::VectorXd x = sensors(H, R, z, me);
+    updateMe(x, me);
 }
 void KalmanFilter::updateLiDAR(const Eigen::VectorXd& z, NevigationObject& me) {
     Eigen::MatrixXd H(1, 2);
     H << 1, 0; 
 
     Eigen::MatrixXd R = Eigen::MatrixXd::Identity(1, 1) * 0.2; 
-    sensors(H, R, z, me);
+    Eigen::VectorXd x = sensors(H, R, z, me);
+    updateMe(x, me);
 }
-void KalmanFilter::updateGPS(const Eigen::VectorXd& z, NevigationObject& me) {
+void KalmanFilter::updateGPS(const Eigen::VectorXd& z, NevigationObject& me, GPSsensor sen) {
     Eigen::MatrixXd H(1, 2);
     H << 1, 0; // מודד את המרחק הכולל
 
     Eigen::MatrixXd R = Eigen::MatrixXd::Identity(1, 1) * 2.0; 
-    sensors(H, R, z, me);
+    Eigen::VectorXd x = sensors(H, R, z, me);
+    updateMe(x, me, sen);
 }
-void KalmanFilter::sensors(const Eigen::VectorXd& H, const Eigen::VectorXd& R, const Eigen::VectorXd& z, NevigationObject& me) {
+Eigen::VectorXd KalmanFilter::sensors(Eigen::MatrixXd H, const Eigen::MatrixXd R, const Eigen::VectorXd& z, NevigationObject& me) {
     Eigen::VectorXd y = z - H * x;
     Eigen::MatrixXd S = H * P * H.transpose() + R;
     Eigen::MatrixXd K = P * H.transpose() * S.inverse();
 
     x = x + K * y;
     P = (I - K * H) * P;
-	updateMe(x, me);
+    return x;
 }
 
 Eigen::VectorXd KalmanFilter::state() const {
     return x;
 }
 
-Eigen::VectorXd runKalmanFilter(GPSsensor gps, pedometer pedo, lidarSensor lidar, NevigationObject &me) {
+void runKalmanFilter(GPSsensor& gps, pedometer& pedo, LidarSensor& lidar, NevigationObject& me) {
     KalmanFilter kf(0.1);
     Eigen::VectorXd x0(2); // [distance, speed]
     x0 << 0.0, 0.0;
@@ -102,34 +114,26 @@ Eigen::VectorXd runKalmanFilter(GPSsensor gps, pedometer pedo, lidarSensor lidar
 
     auto start = steady_clock::now();
 
-    for (int i = 0; i < 100; ++i) {
+    for (int i = 0; i < 5; ++i) {
         auto now = steady_clock::now();
         double t = duration<double>(now - start).count();
-        kf.predict(t);
-
-
-        // כל 500ms: GPS, pedometer (כמדידת מרחק כולל)
-        
-            //GPS update
+        kf.predict(t, me);
 
 		Eigen::VectorXd gpsVector(1);
-		gpsVector << gps.getDistance(); // distance from GPS
-        kf.updateGPS(gpsVector, me);
+		gpsVector << gps.getTotalDistance(); // distance from GPS
+        kf.updateGPS(gpsVector, me, gps);
         //pedomete update
        
         Eigen::VectorXd pedometerVector(1);
         pedometerVector << pedo.getSpeedness(); // speed from pedometer
         kf.updatePedometer(pedometerVector, me);
     
-
-        // כל 50ms: LiDAR (כמדידת מרחק כולל)
         //lidar update
         Eigen::VectorXd lidarVector(1);
-        lidarVector << lidar.getdistance();
-        kf.updateLiDAR(lidar, me);
+        lidarVector << lidar.getTotalDistance();
+        kf.updateLiDAR(lidarVector, me);
 
         std::this_thread::sleep_for(milliseconds(50));
     }
 
-    return final_state;
 }

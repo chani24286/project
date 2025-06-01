@@ -1,20 +1,8 @@
-
-#include <unordered_map>
-#include <vector>
-
-
 #pragma once
-struct Node {
-    long long id;
-    double lat;
-    double lon;
-};
+#include "global.h"
+#include <vector>
+#include "NevigationObject.h"
 
-struct Edge {
-    long long to;  // Neighboring node ID
-    double distance;  // Distance to neighboring node
-	std::string name; // street name
-};
 using Graph = std::unordered_map<long long, std::vector<Edge>>;
 void remove_node(long long node);
 void remove_edge(long long from, long long to);
@@ -29,6 +17,8 @@ std::unordered_map<long long, double> dijkstra( long long start, std::unordered_
 // שחזור הנתיב
 std::vector<Edge> reconstruct_path(long long start, long long target, const std::unordered_map<long long, long long>& previous);
 long long findNearestNodeId(const std::unordered_map<long long, Node>& nodes, double lat, double lon);
-std::vector<Edge> createGraph(std::string place);
+void createGraph(std::string place, NevigationObject& me);
 
+double calc_angle(double a, double b, double c);
+double calculate_angle(double lat1, double lon1, double lat2, double lon2, double lat3, double lon3);
 

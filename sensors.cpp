@@ -1,11 +1,14 @@
 #include "sensors.h"
 #include <cmath>
 #include <iostream>
+#include <fstream>
+#include <stdexcept>
 #include <string>
 #include "global.h"
 #include "ICP.h"
 #include <Eigen/Dense>
-#define M_PI 3.14159265358979323846
+#include <chrono>
+#include <thread>
 
 
 // Sensor methods
@@ -37,34 +40,46 @@ void LidarSensor::setCurrent_scan(std::string path) {
 	latest_scan = current_scan;
 	current_scan = lidarReading(path);
 	//total_distance = icpAlgorithm(latest_scan, current_scan);
-	Eigen::MatrixXd T= icpAlgorithm(latest_scan, current_scan);
-	setMotion(T);
+	ICP_out out= icpAlgorithm(latest_scan, current_scan);
+	setMotion(out);
+	std::this_thread::sleep_for(std::chrono::seconds(3));
 }
 
 pcl::PointCloud<pcl::PointXYZ>::Ptr LidarSensor::getLatest_scan()  {
-    return latest_scan;
+	return latest_scan;
 }
 pcl::PointCloud<pcl::PointXYZ>::Ptr LidarSensor::getCurrent_scan() {
 	return current_scan;
 }
 void LidarSensor:: setMotion(ICP_out newMotion) {
 	motion = newMotion;
-	Vector3d translation = newMotion.T.block<3, 1>(0, 3);
+	Eigen::Vector3d translation = newMotion.T.block<3, 1>(0, 3);
 	double dx = translation(0);  // המרחק בציר X
 	double dy = translation(1);  // המרחק בציר Y
-	//double dist=math.pow?
-	//total_distance = dist;
+	total_distance = std::sqrt(dx * dx + dy * dy);
+	printing("icp - motion recognized: " + std::to_string(total_distance));
 }
-Eigen::MatrixXd LidarSensor :: getMotion() {
+ICP_out LidarSensor :: getMotion() {
 	return motion;
 }
-
+bool LidarSensor::getIsNoisy() {
+	return isNoisey;
+}
+std::chrono::system_clock::time_point LidarSensor::getStartTime() const {
+	return startTime;
+}
+void LidarSensor::setIsNoisey() {
+	isNoisey = movements(motion);
+}
+void LidarSensor::setStartTime(std::chrono::system_clock::time_point newTime) {
+	startTime = newTime;
+}
 // GPSsensor methods
 GPSsensor::GPSsensor() : lastLat(0.0), lastLon(0.0) {}
-void GPSsensor::setLastLatLon(double lat, double lon) {
-	lastLat = lat;
-	lastLon = lon;
-}
+//void GPSsensor::setLastLatLon(double lat, double lon) {
+//	lastLat = lat;
+//	lastLon = lon;
+//}
 double GPSsensor::getLat() {
 	return lastLat;
 }
@@ -72,11 +87,23 @@ double GPSsensor::getLon() {
 	return lastLon;
 }
 void GPSsensor::setLatAndLon(std::string path) {
-	// עדכון המיקום הנוכחי
 	//reading from file GPS
+	std::ifstream file(path);
+	if (!file.is_open()) {
+		throw std::runtime_error("Failed to open file: " + path);
+	}
+
+	file >> lat >> lon;
+
+	if (file.fail()) {
+		throw std::runtime_error("Failed to read two doubles from file.");
+	}
 	lastLat = lat;
 	lastLon = lon;
-	setTotalDistance(haversine(lastLat, lastLon, lat, lon)); // חישוב המרחק הכולל
+	double dist = haversine(lastLat, lastLon, lat, lon);
+	setTotalDistance(dist); // חישוב המרחק הכולל
+	printing("GPS recognized motion: " + std::to_string(dist));
+	std::this_thread::sleep_for(std::chrono::seconds(7));
 }
 
 // Pedometer methods
@@ -95,9 +122,19 @@ double pedometer::getSpeedness() {
 	return MFS * steps; // חישוב מהירות על פי אורך הצעד
 }
 void pedometer::setSteps(std::string path) {
-	// עדכון מספר הצעדים
-	//reading from file steps
+	std::ifstream file(path);
+	if (!file.is_open()) {
+		throw std::runtime_error("Failed to open file: " + path);
+	}
+
+	file >> steps;
+
+	if (file.fail()) {
+		throw std::runtime_error("Failed to read two doubles from file.");
+	}
+	printing("pedometer recognized walking speednes: " + std::to_string(steps));
 	setTotalDistance(getTotalTime() * getSpeedness());
+	std::this_thread::sleep_for(std::chrono::seconds(7));
 }
 double pedometer::getStepsLength(double distance) {
 	return distance / getSpeedness(); // חישוב אורך הצעד על פי המרחק

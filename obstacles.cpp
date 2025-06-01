@@ -1,4 +1,4 @@
-#include "obstacles.h"
+
 #define _CRT_SECURE_NO_WARNINGS
 
 #include <pcl/io/pcd_io.h>
@@ -15,31 +15,35 @@
 #include <pcl/common/transforms.h>
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
+#include "obstacles.h"
+#include "sensors.h"
+#include <thread>
+#include <chrono>
+#include "graph.h"
 //#include <pcl/visualization/pcl_visualizer.h>
 
 
 pcl::PointCloud<pcl::PointXYZ>::Ptr filter(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, float dist) {
+
+    pcl::PointCloud<pcl::PointXYZ>::Ptr temp_cloud(new pcl::PointCloud<pcl::PointXYZ>);
+
     pcl::PassThrough<pcl::PointXYZ> pass;
     pass.setInputCloud(cloud);
-
-    // סינון נקודות נמוכות מדי או גבוהות מדי
     pass.setFilterFieldName("z");
-    pass.setFilterLimits(0.05, 2.0); // 5 ס"מ עד 2 מטר גובה
-    pass.filter(*cloud);
+    pass.setFilterLimits(0.05, 2.0);
+    pass.filter(*temp_cloud);
 
-
-    // סינון נקודות רחוקות מדי
+    pass.setInputCloud(temp_cloud);
     pass.setFilterFieldName("x");
     pass.setFilterLimits(0.0, dist);
-    pass.filter(*cloud);
+    pass.filter(*cloud); 
+
     return cloud;
 }
 
 float findPassage(float y_min_limit, float y_max_limit, float dist, pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, NevigationObject &me)
 {
  
-
-    // שלב 1: סינון לפי גובה Z ורחוקות X
     cloud = filter(cloud, dist);
     // שלב 2: יצירת KDTree לאשכולות
     pcl::search::KdTree<pcl::PointXYZ>::Ptr tree(new pcl::search::KdTree<pcl::PointXYZ>());
@@ -119,7 +123,7 @@ float findPassage(float y_min_limit, float y_max_limit, float dist, pcl::PointCl
         float gap = left_clusters[i].y_min - left_clusters[i + 1].y_max;
         if (gap >= window_size)
         {
-            float last = (i - 1 < 0) ? 0 : left_clusters[i].y_min - left_clusters[i - 1].y_max;
+            float last = (i - 1 < 0) ? 0 : left_clusters[i].y_min;
             
             //me.setInstruction( "Found passage in left: " + std::to_string(last) + " meters\n");
             found_passage = true;
@@ -135,7 +139,7 @@ float findPassage(float y_min_limit, float y_max_limit, float dist, pcl::PointCl
             {
                 float last=0;
                 if (i - 1 >= 0)
-                    last = right_clusters[i].y_max - right_clusters[i-1].y_max;
+                    last = right_clusters[i].y_max;
                 //me.setInstruction( "Found passage in right: " +std::to_string( last) + " meters from you");
                 found_passage = true;
                 return last;
@@ -145,32 +149,85 @@ float findPassage(float y_min_limit, float y_max_limit, float dist, pcl::PointCl
     if (!found_passage)
         me.setInstruction( "No passage found\n");
 
-    return -1.1;
+ return -1.1;
 }
-int instructionsObs(float x, float y, float distance, NevigationObject &me) {//cloud points is missed
-	float space= findPassage(x,y, distance, me);
-    std::string direction;
-	if (space == -1.1) {
-		me.setInstruction( "No passage found\n");
-        //check if the node moves or throw down the edge and find another trail.
-		return -1;
-	}
-    if (space == 0) {
-	me.setInstruction( "continue straight");
+void instructionsObs( NevigationObject &me,LidarSensor &lidar ) {
+    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud = lidar.getCurrent_scan();
+    float left = me.getLeftLidarDistance();
+    float right = me.getRightLidarDistance();
+    float distance = me.getLengthLidar();
+    if (me.getObstacles()) {
+        float space = findPassage(left, right, distance, cloud, me);
+        std::string direction;
+        if (space == -1.1) {
+            blocked(me, lidar);
+        }
+        if (space == 0) {
+            me.setInstruction("continue straight");
+        }
+        else if (space > 0) {
+            me.setInstruction(" left");
+        }
+        else {
+
+            me.setInstruction(" right");
+        }
     }
-	else if (space > 0) {
-        me.setInstruction( " left");
-	}
-	else {
-		
-       me.setInstruction(" right");
-	}
+    else {
+        if (me.getLeftLidarDistance() < 0.2)
+            me.setInstruction("you are too close to left");
+        if (me.getRightLidarDistance() < 0.2)
+            me.setInstruction("you are too close to right");
+    }
+       
+}
+void blocked(NevigationObject& me, LidarSensor& lidar) {
+    bool waitedMuch = false;
+    if (lidar.getIsNoisy()) {
+        me.setInstruction("Stop, the system has detected an obstacle that seems to move away soon.");
+        if (lidar.getStartTime() == std::chrono::system_clock::time_point::min())
+            lidar.setStartTime(std::chrono::system_clock::now());
+        else {
+            std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
+            std::chrono::duration<double> diff = now - lidar.getStartTime();
+            if (diff < std::chrono::seconds(4))
+                waitedMuch = true;
+        }
+    }
+    if(!lidar.getIsNoisy() || waitedMuch){
+        Node last = me.getLastNode();
+        Edge lastEdge = me.getCurrentEdge();   
+        double constDist = lastEdge.distance - me.getPosition();
+        remove_edge(me.getLastNode().id, me.getNextNode().id);
+        long long target = me.getTargetID();
+        std::unordered_map<long long, long long> previous;
+        auto distances = dijkstra(last.id, previous);
+        std::vector<Edge> allpath = reconstruct_path(last.id, target, previous);
+        me.setTrail(allpath);
+        me.setLastNode(nodes[last.id]);
+        me.addEdgeToFront(Edge{ last.id, constDist, lastEdge.name });
+        me.setInstruction("the way is blocked, calculate a new trail");
+        
+    }
+}
+//pcl::PointCloud<pcl::PointXYZ>::Ptr transform(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, Matrix4d T) {
+//    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_transformed(new pcl::PointCloud<pcl::PointXYZ>);
+//    pcl::transformPointCloud(*cloud, *cloud_transformed, T);
+//    return cloud_transformed;
+//}
+std::string faceRecognition(NevigationObject& me) {
+    std::string command = "python \"C:\\Users\\User\\Documents\\projectC\\ML\\faceDetection\\faceDetection\\detection.py\"";
+    std::string result = exec(command.c_str());
+    std::string known = me.getKnownPeople();
+    if (known != result)
+    {
+        me.setKnownPeople(result);
+        return result;
+    }
 
 }
-pcl::PointCloud<pcl::PointXYZ>::Ptr transform(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, Matrix4d T) {
-    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_transformed(new pcl::PointCloud<pcl::PointXYZ>);
-    pcl::transformPointCloud(*cloud, *cloud_transformed, T);
-    return cloud_transformed;
+void addFaeToKnownPeople(std::string name) {
+    std::string command = "python \"C:\\Users\\User\\Documents\\projectC\\ML\\faceDetection\\faceDetection\\detection.py\"" + name;
+    std::string result = exec(command.c_str());
 }
-
 

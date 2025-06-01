@@ -3,7 +3,7 @@
 #include <fstream>
 #include <vector>
 #include <Eigen/Dense>
-#define M_PI 3.14159265358979323846
+#include "global.h"
 using namespace std;
 using namespace Eigen;
 
@@ -28,31 +28,26 @@ void initK() {
         0.0, 980.8141, 233.1966,
         0.0, 0.0, 1.0;
 }
-vector<Point3D> loadLidarData(const string& file_path) {
-    ifstream file(file_path);
-    vector<Point3D> points;
-    string line;
+vector<Point3D> loadLidarData(Eigen::MatrixXd& mat) {
+    std::vector<Point3D> points;
+    points.reserve(mat.rows());
 
-    if (!file) {
-        cerr << "Failed to open file!" << endl;
-        return points;
+    for (int i = 0; i < mat.rows(); ++i) {
+        Point3D p;
+        p.x = static_cast<float>(mat(i, 0));
+        p.y = static_cast<float>(mat(i, 1));
+        p.z = static_cast<float>(mat(i, 2));
+        points.push_back(p);
     }
 
-    while (getline(file, line)) {
-        stringstream ss(line);
-        float x, y, z;
-        if (ss >> x >> y >> z) {  // אם השורה מכילה 3 ערכים (x, y, z)
-            points.push_back({ x, y, z });
-        }
-    }
-    std::cout << "Loaded " << points.size() << " points from " << file_path << endl;
     return points;
 }
 
-vector<Vector3f> computeValidPoints(const float bbox[4]) {
+vector<Vector3f> computeValidPoints(float bbox[4]) {
     float x_min = bbox[0], y_min = bbox[1], x_max = bbox[2], y_max = bbox[3];
     vector<Vector3f> in_bbox_points;
-    const vector<Point3D>& lidar_points = loadLidarData("C:\\Users\\User\\Downloads\\0000000371.txt");
+    Eigen::MatrixXd mat=PCDtoMatrix("C:\\Users\\User\\Downloads\\0000000371.txt");
+    vector<Point3D> lidar_points = loadLidarData(mat);
 
     for (const auto& pt : lidar_points) {
         Vector4f lidar_pt(pt.x, pt.y, pt.z, 1.0f);
@@ -71,9 +66,9 @@ vector<Vector3f> computeValidPoints(const float bbox[4]) {
     return in_bbox_points;
 }
 
-float angle(const float bbox[4]) {
+float angle(float bbox[4]) {
     const vector<Vector3f> in_bbox_points = computeValidPoints(bbox);
-    // נחשב את הזווית של מרכז האובייקט (ניקח את הממוצע)
+    //computing average angle, by getting all the relevant sidtances
     Vector3f avg_point(0, 0, 0);
     for (const auto& pt : in_bbox_points)
         avg_point += pt;
@@ -83,7 +78,7 @@ float angle(const float bbox[4]) {
     float angle_deg = angle_rad * 180.0f / M_PI; // המרה למעלות
     return angle_deg;
 }
-float AVGdistance(const float bbox[4]) {
+float AVGdistance(float bbox[4]) {
     const vector<Vector3f> valid_depths = computeValidPoints(bbox);
     if (valid_depths.empty()) return -1.0f;
     float sum = 0;
@@ -106,6 +101,6 @@ float maxDistance(float bbox[4]) {
     const vector<Vector3f> valid_depths = computeValidPoints(bbox);
     if (valid_depths.empty()) return -1.0f;
     float max = 0;
-    for (const auto& d : valid_depths) max = (max < d.z) ? d.z;
+    for (const auto& d : valid_depths) max = (max < d.z()) ? d.z() : max;
     return max;
 }

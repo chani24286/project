@@ -5,25 +5,23 @@
 #include <tuple>
 #include <Eigen/Dense>
 
-using namespace std;
-using namespace Eigen;
-
 struct Point3D {
     float x, y, z;
 };
 
 // הצהרות על מטריצות גלובליות
-extern Matrix4f T;
-extern Matrix3f K;
+extern Eigen:: Matrix4f T;
+extern Eigen::Matrix3f K;
 
 // הצהרות על פונקציות
 void initK();
 void initT();
-void initT(Matrix4f new_t);
-void initK(Matrix3f new_k);
-float rightDistance(const float bbox[4]);
-float leftDistance(const float bbox[4]);
-float AVGdistance(const float bbox[4]);
-float angle(const float bbox[4]);
-vector<Vector3f> computeValidPoints(const float bbox[4]);
-vector<Point3D> loadLidarData(const string& file_path);
+void initT(Eigen::Matrix4f new_t);
+void initK(Eigen::Matrix3f new_k);
+float rightDistance( float bbox[4]);
+float leftDistance( float bbox[4]);
+float AVGdistance( float bbox[4]);
+float angle(float bbox[4]);
+std::vector<Eigen::Vector3f> computeValidPoints( float bbox[4]);
+std::vector<Point3D> loadLidarData(Eigen::MatrixXd& mat);
+float maxDistance(float bbox[4]);

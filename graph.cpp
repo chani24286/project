@@ -18,27 +18,18 @@
 #include "NevigationObject.h"
 
 
-const double M_PI = 3.141592653589793;
-constexpr double R = 6371e3; // Radius of the Earth in meters
-// Graph: node ID -> list of edges
-std::unordered_map<long long, std::vector<Edge>> graph;
-std::unordered_map<long long, Node> nodes; // node ID -> node data
+double calc_angle(double a, double b, double c) {
 
+    double numerator = a * a + b * b - c * c;
+    double denominator = 2 * a * b;
 
-// Convert degrees to radians
-//double deg2rad(double deg) {
-//    return deg * M_PI / 180.0;
-//}
-//
-//// Calculate distance using Haversine formula
-//double haversine(double lat1, double lon1, double lat2, double lon2) {
-//    double dlat = deg2rad(lat2 - lat1);
-//    double dlon = deg2rad(lon2 - lon1);
-//    double a = sin(dlat / 2) * sin(dlat / 2) +
-//        cos(deg2rad(lat1)) * cos(deg2rad(lat2)) *
-//        sin(dlon / 2) * sin(dlon / 2);
-//    double c = 2 * atan2(sqrt(a), sqrt(1 - a));
-//    return R * c;
+    // למנוע שגיאות דיוק נקודה צפה קטנות שעלולות לגרום לארגומנט להיות מחוץ לטווח [-1, 1]
+    double cos_C = numerator / denominator;
+    if (cos_C > 1.0) cos_C = 1.0;
+    if (cos_C < -1.0) cos_C = -1.0;
+
+    // חישוב הזווית ברדיאנים
+    return std::acos(cos_C);
 }
 //find my coordinates by google maps request:
 //double calculate_distance_osrm(double lat1, double lon1, double lat2, double lon2) {
@@ -46,6 +37,13 @@ std::unordered_map<long long, Node> nodes; // node ID -> node data
 //    double result = system(command.c_str());
 //    return double;
 //}
+double calculate_angle(double lat1, double lon1, double lat2, double lon2, double lat3, double lon3) {
+    double a = haversine(lat1, lon1, lat2, lon2);
+    double b = haversine(lat2, lon2, lat3, lon3);
+    double c = haversine(lat3, lon3, lat1, lon1);
+    double angle = calc_angle(a, b, c);
+    return angle;
+}
 
 // Add a node to the graph
 void add_node(long long id, double lat, double lon) {
@@ -215,7 +213,7 @@ long long findNearestNodeId(const std::unordered_map<long long, Node>& nodes,  d
 
     return nearestId;
 }
- createGraph(std::string place ,NevigationObject &me) {
+void createGraph(std::string place ,NevigationObject& me) {
 
 
     std::string path = "python\"C:\\Users\\User\\Documents\\projectC\\Map.py"+place+"\"";
@@ -229,20 +227,20 @@ long long findNearestNodeId(const std::unordered_map<long long, Node>& nodes,  d
     // Print the graph
   //  print_graph();
     //find my node id
-    path="python\"C:\\Users\\User\\Documents\\rojectC\\myCoordinates.py\"";
+    path="python \"C:\\Users\\User\\Documents\\projectC\\myCoordinates.py\"";
     std::string result = exec(path.c_str());
     double lat, lon;
-    sscanf(result.c_str(), "%lf,%lf", &lat, &lon);
+    sscanf_s(result.c_str(), "%lf,%lf", &lat, &lon);
     long long start = findNearestNodeId(nodes, lat, lon);
     //finds the target node id
-    path = "python\"C:\\Users\\User\\Documents\\rojectC\\placeToCoordinates.py\""+place;
+    path = "python \"C:\\Users\\User\\Documents\\projectC\\placeToCoordinates.py\" \""+place+"\"";
     result = exec(path.c_str());
-    sscanf(result.c_str(), "%lf,%lf", &lat, &lon);
+    sscanf_s(result.c_str(), "%lf,%lf", &lat, &lon);
     long long target = findNearestNodeId(nodes, lat, lon); 
 
     std::unordered_map<long long, long long> previous;
     auto distances = dijkstra( start, previous);
     std::vector<Edge> allpath = reconstruct_path(start, target, previous);
     me.setTrail(allpath);
-
+    me.setLastNode(nodes[start]);
 }

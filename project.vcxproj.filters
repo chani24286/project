@@ -84,5 +84,6 @@
   <ItemGroup>
     <None Include="packages.config" />
     <None Include="ClassDiagram2.cd" />
+    <None Include="ClassDiagram21.cd" />
   </ItemGroup>
 </Project>
