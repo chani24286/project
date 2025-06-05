@@ -1,3 +1,4 @@
+#define _CRT_SECURE_NO_WARNINGS
 
 #pragma once
 #include <iostream>
@@ -110,30 +111,44 @@ void parse_osm_file(const std::string& nodesfilename, const std::string& edgesfi
     nlohmann::json data;
     std::ifstream(nodesfilename) >> data;
     for (const auto& element : data["features"]) {
-        long long id = element["properties"]["osmid"];
-        double lat = element["properties"]["y"];
-        double lon = element["properties"]["x"];
-        add_node(id, lat, lon);
-        add_node(id * -1, lat, lon);
-
-        if (element["properties"]["highway"].contains("crossing")) 
-            add_edge(element["id"], element["id"] * -1, 2.0, "traffic signals");
-		if (element["properties"]["highway"].contains("traffic_light"))
-			add_edge(element["id"], element["id"] * -1, 2.0, "crossing");
+        try {
+            long long id = element["properties"]["osmid"].get<long long>();
+            double lat = element["properties"]["y"].get<double>();
+            double lon = element["properties"]["x"].get<double>();
+            add_node(id, lat, lon);
+            add_node(id * -1, lat, lon);
+            if (element["properties"]["highway"].is_string()) {
+                std::string highway_str = element["properties"]["highway"].get<std::string>(); // חלץ את המחרוזת
+                if (highway_str.find("crossing") != std::string::npos) 
+                    add_edge(id, id * -1, 2.0, "crossing");
+                if (highway_str.find("traffic_light") == std::string::npos)
+                    add_edge(id, id * -1, 2.0, "traffic signals");
+                
+            }
+        }
+        catch (const nlohmann::json::exception& e) {
+            std::cerr << "Warning: Missing or invalid essential node properties. Error: " << e.what() << ". Skipping element." << std::endl;
+            continue;
+        }
+        for (auto const& [u, neighbors] : graph) {
+            for (auto const& edge : neighbors) {
+                if (!graph.count(edge.to)) {
+                    graph[edge.to] = {}; 
+                }
+            }
+        }
 
     }
     std::ifstream(edgesfilename) >> data;
     for (const auto& element : data["features"]) {
 
-        long long from = element["properties"]["u"];
-        long long to = element["properties"]["v"];
-        double distance = element["properties"]["length"];
-		std::string name = element["properties"]["name"];
+        long long from = element["properties"]["u"].get<long long>();
+        long long to = element["properties"]["v"].get<long long>();
+        double distance = element["properties"]["length"].get<double>();
+		std::string name = (element["properties"]["name"].is_string())?element["properties"]["name"]:"unknown name";
         add_edge(from, to, distance, name);
         add_edge(from * -1, to * -1, distance, name);
-
-    }
-    
+    } 
 }
 
 
@@ -141,8 +156,8 @@ void parse_osm_file(const std::string& nodesfilename, const std::string& edgesfi
 std::unordered_map<long long, double> dijkstra( long long start, std::unordered_map<long long, long long>& previous) {
     std::unordered_map<long long, double> distances;
     previous.clear();
-
     for (const auto& pair : graph) {
+        distances[pair.first];
         distances[pair.first] = std::numeric_limits<double>::infinity();
     }
     distances[start] = 0.0;
@@ -158,8 +173,13 @@ std::unordered_map<long long, double> dijkstra( long long start, std::unordered_
         pq.pop();
 
         if (dist > distances[u]) continue; // Skip outdated entry
+        auto it = graph.find(u);
+        if (it == graph.end()) {
+            // אין שום רשימת שכנים עבור u, נמשיך הלאה
+            continue;
+        }
 
-        for (const auto& edge : graph.at(u)) {
+        for (const auto& edge : it->second) {
             long long v = edge.to;
             double weight = edge.distance;
             double alt = dist + weight;
@@ -170,7 +190,6 @@ std::unordered_map<long long, double> dijkstra( long long start, std::unordered_
             }
         }
     }
-
     return distances;
 }
 const Edge* get_edge( long long from, long long to) {
@@ -183,23 +202,29 @@ const Edge* get_edge( long long from, long long to) {
 }
 std::vector<Edge> reconstruct_path(long long start, long long target, const std::unordered_map<long long, long long>& previous) {
     std::vector<Edge> path;
-	//first - where i am comming from, second- where i am going to
     long long at = target;
-    auto it=previous.find(at);;
+
     while (at != start) {
-		 const Edge* edge = get_edge( at, it->first);
+        auto it = previous.find(at);
+        if (it == previous.end()) {
+            // אין מסלול אל היעד
+            return {};
+        }
+        long long from = it->second;
+        const Edge* edge = get_edge(from, at);  // מחפשים את הקשת מ־from אל at
+        if (!edge) {
+            return {};
+        }
         path.push_back(*edge);
-        
-        if (it == previous.end()) return {}; // no path
-        at = it->second;
-        it = previous.find(at);
+        at = from; 
     }
-	const Edge* edge = get_edge( start, it->first);
-    path.push_back(*edge);
+
     std::reverse(path.begin(), path.end());
     return path;
 }
-long long findNearestNodeId(const std::unordered_map<long long, Node>& nodes,  double lat,double lon ) {
+
+    long long findNearestNodeId(const std::unordered_map<long long, Node>& nodes,  double lat,double lon ) {
+	std::cout << "Finding nearest node to coordinates: (" << lat << ", " << lon << ")\n";
     long long nearestId = -1;
     double minDist = std::numeric_limits<double>::max();
 
@@ -210,16 +235,19 @@ long long findNearestNodeId(const std::unordered_map<long long, Node>& nodes,  d
             nearestId = id;
         }
     }
-
+	std::cout << "Nearest node ID: " << nearestId << " with distance: " << minDist << "\n";
     return nearestId;
 }
-void createGraph(std::string place ,NevigationObject& me) {
+    void createGraph(std::string place ,NevigationObject& me) {
 
+        std::string script_path = "C:\\Users\\User\\Documents\\projectC\\Map.py";
+        std::string argument = "Karmiel, Israel";
 
-    std::string path = "python\"C:\\Users\\User\\Documents\\projectC\\Map.py"+place+"\"";
-	system(path.c_str());
-    std::string nodesJSON = "C:\\Users\\User\\Documents\\projectC\\nodes.geojson";
-    std::string edgesJSON  = "C:\\Users\\User\\Documents\\projectC\\edges.geojson";
+        std::string path = "python \"" + script_path + "\" \"" + argument + "\"";
+        std::cout << "Executing command: " << path << std::endl;
+	    system(path.c_str());
+         std::string nodesJSON = "C:\\Users\\User\\Documents\\projectC\\nodes.geojson";
+        std::string edgesJSON  = "C:\\Users\\User\\Documents\\projectC\\edges.geojson";
 
     // Parse the OSM file and build the graph
     parse_osm_file(nodesJSON, edgesJSON);
@@ -227,12 +255,13 @@ void createGraph(std::string place ,NevigationObject& me) {
     // Print the graph
   //  print_graph();
     //find my node id
-    path="python \"C:\\Users\\User\\Documents\\projectC\\myCoordinates.py\"";
+   path="python \"C:\\Users\\User\\Documents\\projectC\\myCoordinates.py\"";
     std::string result = exec(path.c_str());
     double lat, lon;
     sscanf_s(result.c_str(), "%lf,%lf", &lat, &lon);
     long long start = findNearestNodeId(nodes, lat, lon);
     //finds the target node id
+    place = "Zahal 104 Karmiel, Israel";
     path = "python \"C:\\Users\\User\\Documents\\projectC\\placeToCoordinates.py\" \""+place+"\"";
     result = exec(path.c_str());
     sscanf_s(result.c_str(), "%lf,%lf", &lat, &lon);

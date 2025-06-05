@@ -3,6 +3,7 @@
 #include <vector>
 #include "NevigationObject.h"
 
+
 using Graph = std::unordered_map<long long, std::vector<Edge>>;
 void remove_node(long long node);
 void remove_edge(long long from, long long to);
@@ -21,4 +22,3 @@ void createGraph(std::string place, NevigationObject& me);
 
 double calc_angle(double a, double b, double c);
 double calculate_angle(double lat1, double lon1, double lat2, double lon2, double lat3, double lon3);
-

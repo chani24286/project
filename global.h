@@ -6,7 +6,7 @@
 #include <atomic>
 
 #define M_PI 3.14159265358979323846
-constexpr double R = 6371e3; // Radius of the Earth in meters
+constexpr double R = 6371000.0; // Radius of the Earth in meters
 struct Node {
     long long id;
     double lat;

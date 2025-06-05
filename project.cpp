@@ -152,23 +152,25 @@
 #include "sensors.h"
 #include "kalmanFilter.h"
 #include "controller.h"
-#include "obstacles.h"
+#include "obstacles.h"-
 int main() {
 	std::string GPSpath = "C:\\Users\\User\\Documents\\projectC\\data\\GPS.txt";
-	std::string LIDARpath = "C:\\Users\\User\\Documents\\projectC\\data\\lidar.pcd";
 	std::string PEDOMETERpath = "C:\\Users\\User\\Documents\\projectC\\data\\pedometer.txt";
-	std::string PICTUREpath = "C:\\Users\\User\\Documents\\projectC\\data\\0000000371 (1).png";
+	std::string PICTUREpath = "C:\\Users\\User\\Documents\\projectC\\data\\0000000371.png";
 	NevigationObject me(0.0,0.0, 10.0);
 	LidarSensor lidar;
 	GPSsensor GPS;
 	pedometer pedo;
 	std::string result=speachAndSplit(me);
-	if (result == "going") {
-		std::thread lidarThread(&LidarSensor::setCurrent_scan,std::ref(lidar), LIDARpath);
+	if (result == "going") 		std::thread yoloThread(yoloDetection, PICTUREpath, std::ref(me), std::ref(lidar));
 		std::thread GPSThread(&GPSsensor::setLatAndLon, std::ref(GPS), GPSpath);
 		std::thread pedometerThread(&pedometer::setSteps, std::ref(pedo), PEDOMETERpath);
 		std::thread KFThread(runKalmanFilter, std::ref(GPS), std::ref(pedo), std::ref(lidar), std::ref(me));
-		std::thread cameraThread(pictureDetection, std::ref(me), PICTUREpath, std::ref(lidar));
 		std::thread FRCthread(faceRecognition, std::ref(me));
+		GPSThread.join();
+		pedometerThread.join();
+		KFThread.join();
+		yoloThread.join();
+		FRCthread.join();
 	}
 }

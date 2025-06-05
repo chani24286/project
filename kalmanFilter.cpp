@@ -1,3 +1,5 @@
+#define _CRT_SECURE_NO_WARNINGS
+
 #include "kalmanFilter.h"
 #include <iostream>
 #include <chrono>
@@ -21,10 +23,10 @@ KalmanFilter::KalmanFilter(double q_scale)
 void KalmanFilter:: updateMe(const Eigen::VectorXd& x, NevigationObject& me, std::optional<GPSsensor> sen=std::nullopt) {
     // Update the state with the current position
 
-    if (x(0) <= 0) 
+    if (x(0) <= me.getCurrentEdge().distance-10) 
       me.goToNextEdge();
 
-    if (x(0) <= 10 && sen.has_value()) {
+    if (me.getCurrentEdge().distance-x(0) <= 10 && sen.has_value()) {
         std::vector < Edge > trail= me.getTrail();
         if (trail.size() < 2) {
             me.setNextTurnAngle(0.0);
@@ -34,7 +36,7 @@ void KalmanFilter:: updateMe(const Eigen::VectorXd& x, NevigationObject& me, std
         double ang= calculate_angle(sen.value().getLat(), sen.value().getLon(),me.getNextNode().lat, me.getNextNode().lon, next.lat, next.lon);
         me.setNextTurnAngle(ang);
     }
-    printing("kalman update position and valocity: " +std::to_string( x(0))+" "+ std::to_string(x(1)));
+    //printing("kalman update position and valocity: " +std::to_string( x(0))+" "+ std::to_string(x(1)));
 	me.setPosition(x(0));
 
 }
@@ -65,6 +67,8 @@ void KalmanFilter::predict(double t, NevigationObject &me) {
 
     x = A * x;
     P = A * P * A.transpose() + Q;
+    //printing("dt: " + std::to_string(dt));
+	//std::cout << "predict: " << x.transpose() << std::endl;
 	updateMe(x, me);
 }
 
@@ -88,7 +92,7 @@ void KalmanFilter::updateGPS(const Eigen::VectorXd& z, NevigationObject& me, GPS
     Eigen::MatrixXd H(1, 2);
     H << 1, 0; // מודד את המרחק הכולל
 
-    Eigen::MatrixXd R = Eigen::MatrixXd::Identity(1, 1) * 2.0; 
+    Eigen::MatrixXd R = Eigen::MatrixXd::Identity(1, 1) *0.5; 
     Eigen::VectorXd x = sensors(H, R, z, me);
     updateMe(x, me, sen);
 }
@@ -114,26 +118,33 @@ void runKalmanFilter(GPSsensor& gps, pedometer& pedo, LidarSensor& lidar, Neviga
 
     auto start = steady_clock::now();
 
-    for (int i = 0; i < 5; ++i) {
+    for (int i = 0; i <= 5; ++i) {
         auto now = steady_clock::now();
         double t = duration<double>(now - start).count();
+		//std::cout << "prediction: " << std::endl;
         kf.predict(t, me);
 
-		Eigen::VectorXd gpsVector(1);
-		gpsVector << gps.getTotalDistance(); // distance from GPS
-        kf.updateGPS(gpsVector, me, gps);
-        //pedomete update
-       
-        Eigen::VectorXd pedometerVector(1);
-        pedometerVector << pedo.getSpeedness(); // speed from pedometer
-        kf.updatePedometer(pedometerVector, me);
-    
+        if(i%2==0){
+		   Eigen::VectorXd gpsVector(1);
+		   gpsVector << gps.getTotalDistance()+ kf.state()(0);// distance from GPS
+           
+		   //std::cout << "gps update kf: " << gpsVector(0) << kf.state().transpose() << std::endl;
+           kf.updateGPS(gpsVector, me, gps);
+           //pedomete update
+          
+           Eigen::VectorXd pedometerVector(1);
+           pedometerVector << pedo.getSpeedness(); // speed from pedometer
+		   //std::cout << "pedometer update kf: " << pedometerVector(0) << std::endl;
+           kf.updatePedometer(pedometerVector, me);
+        }
         //lidar update
-        Eigen::VectorXd lidarVector(1);
-        lidarVector << lidar.getTotalDistance();
-        kf.updateLiDAR(lidarVector, me);
-
-        std::this_thread::sleep_for(milliseconds(50));
+        if(i==5){
+            Eigen::VectorXd lidarVector(1);
+            lidarVector << lidar.getTotalDistance() + kf.state()(0);
+			//std::cout << "lidar update kf: " << lidarVector(0) << kf.state().transpose() << std::endl;
+            kf.updateLiDAR(lidarVector, me);
+        }
+        std::this_thread::sleep_for(seconds(2));
     }
 
 }

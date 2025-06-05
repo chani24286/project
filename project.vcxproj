@@ -118,8 +118,8 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>-I"C:\Users\User\vcpkg\installed\x64-windows\include";%(AdditionalLibraryDirectories);C:\Users\User\vcpkg\installed\x64-windows\lib;C:\Users\User\vcpkg\installed\x64-windows\lib</AdditionalLibraryDirectories>
-      <AdditionalDependencies>pcl_common.lib;pcl_io.lib;pcl_filters.lib;pcl_features.lib;pcl_io_ply.lib;pcl_kdtree.lib;pcl_keypoints.lib;pcl_ml.lib;pcl_octree.lib;*.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>-I"C:\Users\User\vcpkg\installed\x64-windows\include";%(AdditionalLibraryDirectories);C:\Users\User\vcpkg\installed\x64-windows\lib;C:\Users\User\vcpkg\installed\x64-windows\debug\lib</AdditionalLibraryDirectories>
+      <AdditionalDependencies>pcl_common.lib;pcl_io.lib;pcl_filters.lib;pcl_features.lib;pcl_io_ply.lib;pcl_kdtree.lib;pcl_keypoints.lib;pcl_ml.lib;pcl_octree.lib;*.lib;pcl_commond.lib;pcl_iod.lib;pcl_kdtreed.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">

@@ -181,26 +181,10 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr lidarReading(std::string path) {
     return cloud2;
 }
 ICP_out icpAlgorithm(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, pcl::PointCloud<pcl::PointXYZ>::Ptr cloud2){
-  //  pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ>);
- //   cloud = lidar.getCurrent_scan();
-   
- /*   Eigen::MatrixXd A(cloud->points.size(), 3);
-    for (size_t i = 0; i < cloud->points.size(); ++i) {
-        A(i, 0) = cloud->points[i].x;
-        A(i, 1) = cloud->points[i].y;
-        A(i, 2) = cloud->points[i].z;
-    }*/
+
     Eigen::MatrixXd A= convertPCLtoMatrix(cloud);
     Eigen::MatrixXd B = convertPCLtoMatrix(cloud2);
-//    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud2(new pcl::PointCloud<pcl::PointXYZ>);
-  //  pcl::io::loadPCDFile(path, *cloud2);
-    //lidar.setCurrent_scan(cloud2);
-  /*  Eigen::MatrixXd B(cloud2->points.size(), 3);
-    for (size_t i = 0; i < cloud2->points.size(); ++i) {
-        B(i, 0) = cloud2->points[i].x;
-        B(i, 1) = cloud2->points[i].y;
-        B(i, 2) = cloud2->points[i].z;
-    }*/
+
     ICP_out out=  icp(A, B, 50, 0.001);
    
 

@@ -22,7 +22,7 @@ struct object {
 bool relevant(object& obj, NevigationObject& me);
 void findLimits(float bbox[], NevigationObject& me);
 void clearLock(std::vector <object>& objects, NevigationObject& me);
-void pictureDetection(NevigationObject& me, std::string path, LidarSensor& lidar);
+void pictureDetection(NevigationObject& me, LidarSensor& lidar);
 std::vector <object> readYolo(NevigationObject& me);
 void sidewalk(object& obj, NevigationObject& me, LidarSensor& lidar);
 void crosswalk(object& obj, NevigationObject& me, LidarSensor& lidar);
@@ -32,6 +32,8 @@ void downstairs(object& obj, NevigationObject& me, LidarSensor& lidar);
 void red(object& obj, NevigationObject& me, LidarSensor& lidar);
 void road(object& obj, NevigationObject& me, LidarSensor& lidar);
 void trafficlight(object& obj, NevigationObject& me, LidarSensor& lidar);
+void camAndLidar(NevigationObject& me, LidarSensor& lidar);
+void yoloDetection(std::string path, NevigationObject& me, LidarSensor& lidar);
 
 using Funcptr = void(*)(object&, NevigationObject&, LidarSensor& ); // Function pointer type for handling yolo detections
 extern Funcptr functions[8];

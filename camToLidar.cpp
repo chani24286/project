@@ -1,3 +1,5 @@
+#define _CRT_SECURE_NO_WARNINGS
+
 #include "camToLidar.h"
 #include <iostream>
 #include <fstream>
@@ -44,9 +46,11 @@ vector<Point3D> loadLidarData(Eigen::MatrixXd& mat) {
 }
 
 vector<Vector3f> computeValidPoints(float bbox[4]) {
+    initK();
+	initT();
     float x_min = bbox[0], y_min = bbox[1], x_max = bbox[2], y_max = bbox[3];
     vector<Vector3f> in_bbox_points;
-    Eigen::MatrixXd mat=PCDtoMatrix("C:\\Users\\User\\Downloads\\0000000371.txt");
+    Eigen::MatrixXd mat=PCDtoMatrix("C:\\Users\\User\\Documents\\projectC\\data\\lidar1.pcd");
     vector<Point3D> lidar_points = loadLidarData(mat);
 
     for (const auto& pt : lidar_points) {
@@ -56,6 +60,10 @@ vector<Vector3f> computeValidPoints(float bbox[4]) {
         if (cam_pt.z() <= 0) continue;
 
         Vector3f proj = K * cam_pt;
+  //      std::cout<<"k: " << K.transpose() << endl;
+  //      std::cout << "T: " << T.transpose() << endl;
+  //      std::cout << "cam_pt: " << cam_pt.transpose() << endl;
+		//std::cout << proj(0) << " " << proj(1) << " " << proj(2) << std::endl;
         float u = proj(0) / proj(2);
         float v = proj(1) / proj(2);
 

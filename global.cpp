@@ -1,3 +1,5 @@
+#define _CRT_SECURE_NO_WARNINGS
+
 #include <pcl/io/pcd_io.h>
 #include <pcl/point_types.h>
 #include <pcl/common/transforms.h>
@@ -123,9 +125,6 @@ double metersToDegreesLon(double meters, double latitude_deg) {
     return meters / (111320.0 * std::cos(latitude_deg * M_PI / 180.0));
 }
 int transformGPS(std::string file_path, double dist) {
-    //"C:\\Users\\User\\Documents\\projectC\\data\\GPS.txt";  
-
-    // קריאה
     std::ifstream in(file_path);
     if (!in) {
 		std::cerr << "err in opening file: " << file_path << "\n";
@@ -134,6 +133,9 @@ int transformGPS(std::string file_path, double dist) {
 
     double lat, lon;
     in >> lat >> lon;
+    if (in.fail()) {
+        std::cerr << "Error reading lat/lon from file.\n";
+    }
     in.close();
 
     double delta_lat = metersToDegreesLat(dist);
@@ -148,7 +150,6 @@ int transformGPS(std::string file_path, double dist) {
         return 1;
     }
     out << std::fixed << std::setprecision(10); 
-    out << lat << " " << lon << "\n";
     out << lat << " " << lon << "\n";
     out.close();
 

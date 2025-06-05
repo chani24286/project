@@ -1,3 +1,5 @@
+#define _CRT_SECURE_NO_WARNINGS
+
 #include "NevigationObject.h"
 #include <iostream>
 #include "global.h"
@@ -94,10 +96,12 @@ void NevigationObject::initAngle() {
 }
 void NevigationObject::setPosition(double pos) {
     position = pos;
+	printing("Current position: " + std::to_string(position) + "m");
 }
 
 void NevigationObject::setNowObstacles(int ob) {
 	nowObstacles.push_back(ob);
+	printing("Obstacle added: " + std::to_string(ob));
 }
 void NevigationObject::deleteNowObstacles(int obj) {
 	auto it = std::remove(nowObstacles.begin(), nowObstacles.end(), obj);
@@ -107,24 +111,29 @@ void NevigationObject::deleteNowObstacles(int obj) {
 }
 void NevigationObject::setNextNode(Node newNode) {
 	nextNode = newNode;
+	printing("Next node set to: " + std::to_string(newNode.id) + " at position (" + std::to_string(newNode.lat) + ", " + std::to_string(newNode.lon) + ")");
 }
 void NevigationObject::setLastNode(Node newNode) {
 	lastNode = newNode;
 }
 void NevigationObject::setLeftLidarDistance(double distance) {
 	leftLidarDistance = distance;
+	printing("Left Lidar distance set to: " + std::to_string(leftLidarDistance) + "m");
 }
 void NevigationObject::setRightLidarDistance(double distance) {
 	rightLidarDistance = distance;
+	printing("Right Lidar distance set to: " + std::to_string(rightLidarDistance) + "m");
 }
 void NevigationObject::setLengthLidar(double length) {
 	lengthLidar = length;
+	printf("Lidar length set to: %.2f m\n", lengthLidar);
 }
 void NevigationObject::setObstacles(bool notInstructed) {
 	obstacles = notInstructed;
 }
 void NevigationObject::setTrail(const std::vector<Edge>& newTrail) { 
 	trail = newTrail; 
+	printing("got new trail");
 	goToNextEdge();
 }
 
@@ -137,14 +146,17 @@ void NevigationObject::setAdditionalInstructions(std::string instruction) {
 	std::lock_guard<std::mutex> lock(mtx);
 	additionalInstructions = instruction;
 	sayIt(additionalInstructions);
+	printing( additionalInstructions);
 }
 void NevigationObject::setInstruction(std::string instruction) {
 	std::lock_guard<std::mutex> lock(mtx);
 	this->instructions = instruction;
 	sayIt(this->instructions);
+	printing(this->instructions);
 }
 void NevigationObject::setKnownPeople(std::string people) {
 	knowPeople = people;
 	sayIt( people+"is in the area");
+	printing("Known people updated: " + knowPeople);
 }
 

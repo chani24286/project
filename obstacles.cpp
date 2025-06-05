@@ -20,7 +20,7 @@
 #include <thread>
 #include <chrono>
 #include "graph.h"
-//#include <pcl/visualization/pcl_visualizer.h>
+#include <Eigen/Dense>
 
 
 pcl::PointCloud<pcl::PointXYZ>::Ptr filter(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, float dist) {
@@ -30,7 +30,7 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr filter(pcl::PointCloud<pcl::PointXYZ>::Ptr c
     pcl::PassThrough<pcl::PointXYZ> pass;
     pass.setInputCloud(cloud);
     pass.setFilterFieldName("z");
-    pass.setFilterLimits(0.05, 2.0);
+    pass.setFilterLimits(2.0, 2.0);
     pass.filter(*temp_cloud);
 
     pass.setInputCloud(temp_cloud);
@@ -45,12 +45,14 @@ float findPassage(float y_min_limit, float y_max_limit, float dist, pcl::PointCl
 {
  
     cloud = filter(cloud, dist);
+    std::vector<pcl::PointIndices> cluster_indices;
+    if (!cloud->empty()) {
+    
     // שלב 2: יצירת KDTree לאשכולות
     pcl::search::KdTree<pcl::PointXYZ>::Ptr tree(new pcl::search::KdTree<pcl::PointXYZ>());
     tree->setInputCloud(cloud);
 
     // שלב 3: חיפוש אשכולות
-    std::vector<pcl::PointIndices> cluster_indices;
     pcl::EuclideanClusterExtraction<pcl::PointXYZ> ec;
     ec.setClusterTolerance(0.3); // מרחק מקסימלי בין נקודות כדי להיחשב באותו אשכול
     ec.setMinClusterSize(10);
@@ -58,7 +60,7 @@ float findPassage(float y_min_limit, float y_max_limit, float dist, pcl::PointCl
     ec.setSearchMethod(tree);
     ec.setInputCloud(cloud);
     ec.extract(cluster_indices);
-
+    }
     // שלב 4: החזקת פרטי האשכולות
     std::vector<ClusterInfo> left_clusters;
     std::vector<ClusterInfo> right_clusters;
@@ -114,7 +116,7 @@ float findPassage(float y_min_limit, float y_max_limit, float dist, pcl::PointCl
 
     float gap_middle = right_clusters[0].y_min - left_clusters.back().y_max;
     if (gap_middle >= window_size) {
-        //me.setInstruction("Found passage between left and right clusters continue straight: " +std::to_string(gap_middle));
+        me.setInstruction("Found passage between left and right clusters continue straight: " +std::to_string(gap_middle));
         return 0.0;
     }
     // נבדוק בין אשכולות בצד שמאל
@@ -125,7 +127,7 @@ float findPassage(float y_min_limit, float y_max_limit, float dist, pcl::PointCl
         {
             float last = (i - 1 < 0) ? 0 : left_clusters[i].y_min;
             
-            //me.setInstruction( "Found passage in left: " + std::to_string(last) + " meters\n");
+			std::cout << "Found passage in left: " << last << " meters from you\n";
             found_passage = true;
             return last;
         }
@@ -140,7 +142,7 @@ float findPassage(float y_min_limit, float y_max_limit, float dist, pcl::PointCl
                 float last=0;
                 if (i - 1 >= 0)
                     last = right_clusters[i].y_max;
-                //me.setInstruction( "Found passage in right: " +std::to_string( last) + " meters from you");
+				std::cout << "found passage in right: " << last << " meters from you\n";
                 found_passage = true;
                 return last;
             }
@@ -153,10 +155,23 @@ float findPassage(float y_min_limit, float y_max_limit, float dist, pcl::PointCl
 }
 void instructionsObs( NevigationObject &me,LidarSensor &lidar ) {
     pcl::PointCloud<pcl::PointXYZ>::Ptr cloud = lidar.getCurrent_scan();
+    pcl::PointCloud<pcl::PointXYZ>::Ptr transformed_cloud(new pcl::PointCloud<pcl::PointXYZ>);
     float left = me.getLeftLidarDistance();
     float right = me.getRightLidarDistance();
     float distance = me.getLengthLidar();
     if (me.getObstacles()) {
+        Eigen::Matrix4f T;
+        T<< 7.533745e-03, -9.999714e-01, -6.166020e-04, -4.069766e-03,
+            1.480249e-02, 7.280733e-04, -9.998902e-01, -7.631618e-02,
+            9.998621e-01, 7.523790e-03, 1.480755e-02, -2.717806e-01,
+            0.0, 0.0, 0.0, 1.0;
+        try {
+            pcl::transformPointCloud(*cloud, *transformed_cloud, T);
+            std::cout << "Transform completed, got " << transformed_cloud->size() << " points\n";
+        }
+        catch (const std::exception& e) {
+            std::cerr << "Transform failed: " << e.what() << std::endl;
+        }
         float space = findPassage(left, right, distance, cloud, me);
         std::string direction;
         if (space == -1.1) {
@@ -166,11 +181,11 @@ void instructionsObs( NevigationObject &me,LidarSensor &lidar ) {
             me.setInstruction("continue straight");
         }
         else if (space > 0) {
-            me.setInstruction(" left");
+            me.setInstruction(" turn left");
         }
         else {
 
-            me.setInstruction(" right");
+            me.setInstruction(" turn right");
         }
     }
     else {

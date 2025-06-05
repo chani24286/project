@@ -1,3 +1,5 @@
+#define _CRT_SECURE_NO_WARNINGS
+
 #include "speach.h"
 #include <cstdio>
 #include <iostream>
@@ -13,18 +15,16 @@ std::string output;
 
 std::string pathSTT = "python \"C:\\Users\\User\\Documents\\projectC\\speech-recognition\\speechToText.py\"";
 std::string  speachAndSplit(NevigationObject &me){
-	
-	if (findWord("send")) {
+	if (findWord("send")||0==0) {
 		std::string wellcome = "Hi, I am here to help you. If you want to go somewhere, just tell me and say go. for another service say other";
 		sayIt(wellcome);
-		if(findWord("go")){
+		if(findWord("go") || 0 == 0){
 			std::string location = getWord();
 			std::cout << "location: " << location << std::endl;
 			createGraph(location, me);
 			return "going";
 		}
 	}
-
 }
 void sayIt(std::string str) {
 	std::string scriptPath = "C:\\Users\\User\\Documents\\projectC\\tts.py";
